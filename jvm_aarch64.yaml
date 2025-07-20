@@ -1,2 +1,2 @@
-image: ghcr.io/making/envoy-external-authz@sha256:65ff979204efb6b44150dff7d8f9785d0c1ed22b60c1d361db08b65e73456a05
-git_revision: 67512e3bf83c0efe2a98738229cb5aa5ee69f7c5
+image: ghcr.io/making/envoy-external-authz@sha256:e4fb93119eb196590e1cbc930ba5057721ba20198256aecbe31b3313837b6c9a
+git_revision: 49c440044df466cfa58a03162b08a4a83f413b2d
