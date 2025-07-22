@@ -35,16 +35,13 @@ public class AuthorizationServiceImpl extends AuthorizationGrpc.AuthorizationImp
 		String authorization = req.getHeadersMap().get("authorization");
 		if (authorization == null || !authorization.startsWith("Basic ")) {
 			responseObserver.onNext(CheckResponse.newBuilder()
-				.setStatus(Status.newBuilder().setCode(Code.UNAUTHENTICATED_VALUE).build())
+				.setStatus(Status.newBuilder().setCode(Code.UNAUTHENTICATED_VALUE))
 				.setDeniedResponse(DeniedHttpResponse.newBuilder()
-					.setStatus(HttpStatus.newBuilder().setCode(StatusCode.Unauthorized).build())
+					.setStatus(HttpStatus.newBuilder().setCode(StatusCode.Unauthorized))
 					.addHeaders(HeaderValueOption.newBuilder()
 						.setHeader(HeaderValue.newBuilder()
 							.setKey("X-Auth-Handler")
-							.setValue("am.ik.envoy.AuthorizationServiceImpl.check")
-							.build())
-						.build())
-					.build())
+							.setValue("am.ik.envoy.AuthorizationServiceImpl.check"))))
 				.build());
 			responseObserver.onCompleted();
 			return;
@@ -57,30 +54,25 @@ public class AuthorizationServiceImpl extends AuthorizationGrpc.AuthorizationImp
 		logger.info("Authenticating user={}", user);
 		if ("demo".equals(user) && "password".equals(password)) {
 			responseObserver.onNext(CheckResponse.newBuilder()
-				.setStatus(Status.newBuilder().setCode(Code.OK_VALUE).build())
+				.setStatus(Status.newBuilder().setCode(Code.OK_VALUE))
 				.setOkResponse(OkHttpResponse.newBuilder()
 					.addHeaders(HeaderValueOption.newBuilder()
-						.setHeader(HeaderValue.newBuilder().setKey("X-User").setValue(user).build())
+						.setHeader(HeaderValue.newBuilder().setKey("X-User").setValue(user)))
+					.addHeaders(HeaderValueOption.newBuilder()
 						.setHeader(HeaderValue.newBuilder()
 							.setKey("X-Auth-Handler")
-							.setValue("am.ik.envoy.AuthorizationServiceImpl.check")
-							.build())
-						.build())
-					.build())
+							.setValue("am.ik.envoy.AuthorizationServiceImpl.check"))))
 				.build());
 		}
 		else {
 			responseObserver.onNext(CheckResponse.newBuilder()
-				.setStatus(Status.newBuilder().setCode(Code.PERMISSION_DENIED_VALUE).build())
+				.setStatus(Status.newBuilder().setCode(Code.PERMISSION_DENIED_VALUE))
 				.setDeniedResponse(DeniedHttpResponse.newBuilder()
-					.setStatus(HttpStatus.newBuilder().setCode(StatusCode.Forbidden).build())
+					.setStatus(HttpStatus.newBuilder().setCode(StatusCode.Forbidden))
 					.addHeaders(HeaderValueOption.newBuilder()
 						.setHeader(HeaderValue.newBuilder()
 							.setKey("X-Auth-Handler")
-							.setValue("am.ik.envoy.AuthorizationServiceImpl.check")
-							.build())
-						.build())
-					.build())
+							.setValue("am.ik.envoy.AuthorizationServiceImpl.check"))))
 				.build());
 		}
 		responseObserver.onCompleted();
