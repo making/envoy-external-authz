@@ -9,11 +9,13 @@ import io.envoyproxy.envoy.service.auth.v3.AttributeContext;
 import io.envoyproxy.envoy.service.auth.v3.AuthorizationGrpc;
 import io.envoyproxy.envoy.service.auth.v3.CheckRequest;
 import io.envoyproxy.envoy.service.auth.v3.CheckResponse;
+import io.envoyproxy.envoy.service.auth.v3.DeniedHttpResponse;
 import io.envoyproxy.envoy.type.v3.StatusCode;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.grpc.client.ImportGrpcClients;
+import org.springframework.http.HttpHeaders;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -52,6 +54,10 @@ class AuthorizationServiceImplTest {
 			.build());
 		assertThat(checkResponse.hasOkResponse()).isTrue();
 		assertThat(checkResponse.hasDeniedResponse()).isFalse();
+		assertThat(checkResponse.getOkResponse().getHeadersList()).anySatisfy(header -> {
+			assertThat(header.getHeader().getKey()).isEqualTo("X-User");
+			assertThat(header.getHeader().getValue()).isEqualTo("demo");
+		});
 		assertThat(checkResponse.getStatus().getCode()).isEqualTo(Code.OK_VALUE);
 	}
 
@@ -81,7 +87,12 @@ class AuthorizationServiceImplTest {
 			.build());
 		assertThat(checkResponse.hasOkResponse()).isFalse();
 		assertThat(checkResponse.hasDeniedResponse()).isTrue();
-		assertThat(checkResponse.getDeniedResponse().getStatus().getCode()).isEqualTo(StatusCode.Forbidden);
+		DeniedHttpResponse deniedResponse = checkResponse.getDeniedResponse();
+		assertThat(deniedResponse.getStatus().getCode()).isEqualTo(StatusCode.Unauthorized);
+		assertThat(deniedResponse.getHeadersList()).anySatisfy(header -> {
+			assertThat(header.getHeader().getKey()).isEqualTo(HttpHeaders.WWW_AUTHENTICATE);
+			assertThat(header.getHeader().getValue()).isEqualTo("Basic realm=\"Envoy External Auth\"");
+		});
 		assertThat(checkResponse.getStatus().getCode()).isEqualTo(Code.PERMISSION_DENIED_VALUE);
 	}
 
@@ -111,7 +122,12 @@ class AuthorizationServiceImplTest {
 			.build());
 		assertThat(checkResponse.hasOkResponse()).isFalse();
 		assertThat(checkResponse.hasDeniedResponse()).isTrue();
-		assertThat(checkResponse.getDeniedResponse().getStatus().getCode()).isEqualTo(StatusCode.Forbidden);
+		DeniedHttpResponse deniedResponse = checkResponse.getDeniedResponse();
+		assertThat(deniedResponse.getStatus().getCode()).isEqualTo(StatusCode.Unauthorized);
+		assertThat(deniedResponse.getHeadersList()).anySatisfy(header -> {
+			assertThat(header.getHeader().getKey()).isEqualTo(HttpHeaders.WWW_AUTHENTICATE);
+			assertThat(header.getHeader().getValue()).isEqualTo("Basic realm=\"Envoy External Auth\"");
+		});
 		assertThat(checkResponse.getStatus().getCode()).isEqualTo(Code.PERMISSION_DENIED_VALUE);
 	}
 
@@ -141,8 +157,13 @@ class AuthorizationServiceImplTest {
 			.build());
 		assertThat(checkResponse.hasOkResponse()).isFalse();
 		assertThat(checkResponse.hasDeniedResponse()).isTrue();
-		assertThat(checkResponse.getDeniedResponse().getStatus().getCode()).isEqualTo(StatusCode.Unauthorized);
-		assertThat(checkResponse.getStatus().getCode()).isEqualTo(Code.UNAUTHENTICATED_VALUE);
+		DeniedHttpResponse deniedResponse = checkResponse.getDeniedResponse();
+		assertThat(deniedResponse.getStatus().getCode()).isEqualTo(StatusCode.Unauthorized);
+		assertThat(deniedResponse.getHeadersList()).anySatisfy(header -> {
+			assertThat(header.getHeader().getKey()).isEqualTo(HttpHeaders.WWW_AUTHENTICATE);
+			assertThat(header.getHeader().getValue()).isEqualTo("Basic realm=\"Envoy External Auth\"");
+		});
+		assertThat(checkResponse.getStatus().getCode()).isEqualTo(Code.PERMISSION_DENIED_VALUE);
 	}
 
 }
