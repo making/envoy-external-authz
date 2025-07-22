@@ -30,7 +30,7 @@ public class AuthorizationServiceImpl extends AuthorizationGrpc.AuthorizationImp
 		}
 		System.out.println(request);
 		// req.getHeaderMap().getExtension()
-		String user = req.getHeadersMap().get("X-User");
+		String user = req.getHeadersMap().get("x-user");
 		if ("demo".equalsIgnoreCase(user)) {
 			responseObserver.onNext(CheckResponse.newBuilder()
 				.setStatus(Status.newBuilder().setCode(Code.OK_VALUE).build())
