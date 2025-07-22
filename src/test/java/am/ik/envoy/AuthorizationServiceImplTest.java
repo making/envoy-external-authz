@@ -18,7 +18,8 @@ import org.springframework.grpc.client.ImportGrpcClients;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-		properties = "spring.grpc.client.default-channel.address=0.0.0.0:${local.server.port}")
+		properties = { "spring.grpc.client.default-channel.address=0.0.0.0:${local.grpc.port}",
+				"spring.grpc.server.port=0" })
 @ImportGrpcClients(types = AuthorizationGrpc.AuthorizationBlockingStub.class)
 class AuthorizationServiceImplTest {
 
