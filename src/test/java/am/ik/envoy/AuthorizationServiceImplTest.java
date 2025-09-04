@@ -11,7 +11,10 @@ import io.envoyproxy.envoy.service.auth.v3.CheckRequest;
 import io.envoyproxy.envoy.service.auth.v3.CheckResponse;
 import io.envoyproxy.envoy.service.auth.v3.DeniedHttpResponse;
 import io.envoyproxy.envoy.type.v3.StatusCode;
+import java.util.Base64;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.grpc.client.ImportGrpcClients;
@@ -19,17 +22,18 @@ import org.springframework.http.HttpHeaders;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-		properties = { "spring.grpc.client.default-channel.address=0.0.0.0:${local.grpc.port}",
-				"spring.grpc.server.port=0" })
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
+		"spring.grpc.client.default-channel.address=0.0.0.0:${local.grpc.port}", "spring.grpc.server.port=0",
+		"envoy.authz.users=demo:{noop}password,test:{noop}foo,encoded:{bcrypt}$2a$10$NrE2QCpXLEG.Nn/YvEvqR.fw/9MzlpyQASaxkEyO6LHVTN7RSMv8y" })
 @ImportGrpcClients(types = AuthorizationGrpc.AuthorizationBlockingStub.class)
 class AuthorizationServiceImplTest {
 
 	@Autowired
 	AuthorizationGrpc.AuthorizationBlockingStub stub;
 
-	@Test
-	void testOk() throws Exception {
+	@ParameterizedTest
+	@CsvSource({ "demo,password", "test,foo", "encoded,password" })
+	void testOk(String username, String password) throws Exception {
 		CheckResponse checkResponse = this.stub.check(CheckRequest.newBuilder()
 			.setAttributes(AttributeContext.newBuilder()
 				.setSource(AttributeContext.Peer.newBuilder()
@@ -44,7 +48,8 @@ class AuthorizationServiceImplTest {
 					.setHttp(AttributeContext.HttpRequest.newBuilder()
 						.setId("10878827033623646048")
 						.setMethod("GET")
-						.putHeaders("authorization", "Basic ZGVtbzpwYXNzd29yZA==")
+						.putHeaders("authorization",
+								"Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes()))
 						.setPath("/")
 						.setHost("example.com")
 						.setScheme("https")
@@ -56,7 +61,7 @@ class AuthorizationServiceImplTest {
 		assertThat(checkResponse.hasDeniedResponse()).isFalse();
 		assertThat(checkResponse.getOkResponse().getHeadersList()).anySatisfy(header -> {
 			assertThat(header.getHeader().getKey()).isEqualTo("X-User");
-			assertThat(header.getHeader().getValue()).isEqualTo("demo");
+			assertThat(header.getHeader().getValue()).isEqualTo(username);
 		});
 		assertThat(checkResponse.getStatus().getCode()).isEqualTo(Code.OK_VALUE);
 	}
