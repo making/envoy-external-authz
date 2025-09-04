@@ -54,6 +54,7 @@ public class NativeHints {
 			methods.addAll(Arrays.stream(HeaderMap.Builder.class.getMethods()).toList());
 			methods.addAll(Arrays.stream(HeaderValue.class.getMethods()).toList());
 			methods.addAll(Arrays.stream(HeaderValue.Builder.class.getMethods()).toList());
+			methods.addAll(Arrays.stream(EnvoyExternalAuthzProps.User.class.getMethods()).toList());
 			for (Method method : methods) {
 				hints.reflection().registerMethod(method, ExecutableMode.INVOKE);
 			}
