@@ -6,7 +6,8 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 @ConfigurationProperties(prefix = "envoy.authz")
-public record EnvoyExternalAuthzProps(@NestedConfigurationProperty @DefaultValue("") List<User> users) {
+public record EnvoyExternalAuthzProps(@NestedConfigurationProperty @DefaultValue("") List<User> users,
+		@DefaultValue("") List<String> bearerTokens) {
 
 	public record User(String username, String password) {
 

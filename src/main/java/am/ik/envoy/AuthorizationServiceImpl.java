@@ -15,6 +15,7 @@ import io.envoyproxy.envoy.type.v3.HttpStatus;
 import io.envoyproxy.envoy.type.v3.StatusCode;
 import io.grpc.stub.StreamObserver;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -28,6 +29,8 @@ public class AuthorizationServiceImpl extends AuthorizationGrpc.AuthorizationImp
 
 	private final Map<String, String> users;
 
+	private final List<String> bearerTokens;
+
 	private final PasswordEncoder passwordEncoder;
 
 	private final Logger logger = LoggerFactory.getLogger(AuthorizationServiceImpl.class);
@@ -36,6 +39,7 @@ public class AuthorizationServiceImpl extends AuthorizationGrpc.AuthorizationImp
 		this.users = envoyExternalAuthzProps.users()
 			.stream()
 			.collect(Collectors.toUnmodifiableMap(User::username, User::password));
+		this.bearerTokens = envoyExternalAuthzProps.bearerTokens();
 		this.passwordEncoder = passwordEncoder;
 	}
 
@@ -66,6 +70,31 @@ public class AuthorizationServiceImpl extends AuthorizationGrpc.AuthorizationImp
 						.build());
 					responseObserver.onCompleted();
 					return;
+				}
+				else if (username.isEmpty()) {
+					for (String encodedToken : bearerTokens) {
+						if (this.passwordEncoder.matches(password, encodedToken)) {
+							responseObserver.onNext(CheckResponse.newBuilder()
+								.setStatus(Status.newBuilder().setCode(Code.OK_VALUE))
+								.setOkResponse(OkHttpResponse.newBuilder())
+								.build());
+							responseObserver.onCompleted();
+							return;
+						}
+					}
+				}
+			}
+			else if (authorization != null && authorization.startsWith("Bearer ")) {
+				String bearerToken = authorization.substring("Bearer ".length());
+				for (String encodedToken : bearerTokens) {
+					if (this.passwordEncoder.matches(bearerToken, encodedToken)) {
+						responseObserver.onNext(CheckResponse.newBuilder()
+							.setStatus(Status.newBuilder().setCode(Code.OK_VALUE))
+							.setOkResponse(OkHttpResponse.newBuilder())
+							.build());
+						responseObserver.onCompleted();
+						return;
+					}
 				}
 			}
 			responseObserver.onNext(CheckResponse.newBuilder()
